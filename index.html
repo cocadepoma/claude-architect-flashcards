@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>CCA-F Study Kit</title>
+  <meta name="description" content="Flashcards, glossary, 30-day study plan, study companion, course slides, practice exams and assessments for the Claude Certified Architect - Foundations exam.">
+  <meta name="theme-color" content="#f4f2ed" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#151517" media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body data-view="cards">
+  <main class="gate" id="gate">
+    <form class="gate-card" id="gate-form" autocomplete="off">
+      <h1 class="gate-title">CCA-F Study Kit</h1>
+      <p class="gate-text">This content is private. Enter the access code to continue.</p>
+      <label class="gate-label" for="gate-code">Access code</label>
+      <input class="gate-input" id="gate-code" type="password" autocomplete="current-password" autocapitalize="off" spellcheck="false" required>
+      <p class="gate-error" id="gate-error" role="alert"></p>
+      <button class="btn primary" id="gate-submit" type="submit">Unlock</button>
+    </form>
+  </main>
+
+  <div class="app" id="app" hidden>
+    <header class="site-header">
+      <h1>Claude Certified Architect · Foundations</h1>
+      <nav class="tabs" aria-label="Sections">
+        <a class="tab" href="#cards" data-tab="cards">Cards</a>
+        <a class="tab" href="#glossary" data-tab="glossary">Glossary</a>
+        <a class="tab" href="#plan" data-tab="plan">Plan</a>
+        <a class="tab" href="#companion" data-tab="companion">Companion</a>
+        <a class="tab" href="#lessons" data-tab="lessons">Lessons</a>
+        <a class="tab" href="#exams" data-tab="exams">Exams</a>
+        <a class="tab" href="#assessments" data-tab="assessments">Assessments</a>
+      </nav>
+    </header>
+
+    <main class="views">
+      <!-- Flashcards -->
+      <section class="view view-cards" id="view-cards" data-view="cards" aria-label="Flashcards">
+        <div class="cards-meta">
+          <span class="cards-title">Flashcards</span>
+          <span class="counter" id="counter" aria-live="polite"></span>
+        </div>
+        <div class="progress" aria-hidden="true"><div class="progress-bar" id="progress"></div></div>
+
+        <div class="stage">
+          <div class="card" id="card" role="button" tabindex="0" aria-label="Show definition">
+            <div class="card-inner">
+              <div class="face face-front" id="face-front">
+                <div class="face-head">
+                  <span class="label">Term</span>
+                  <span class="domain" data-domain-badge><b class="domain-id"></b><span class="domain-name"></span></span>
+                </div>
+                <div class="content"><p class="term" id="front"></p></div>
+                <span class="hint">Tap the card to see the definition</span>
+              </div>
+              <div class="face face-back" id="face-back" aria-hidden="true">
+                <div class="face-head">
+                  <span class="label">Definition</span>
+                  <span class="domain" data-domain-badge><b class="domain-id"></b><span class="domain-name"></span></span>
+                </div>
+                <div class="content" id="back-scroll"><p class="definition" id="back"></p></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="controls" role="group" aria-label="Card navigation">
+          <button class="btn" id="prev" type="button" aria-label="Previous card">←</button>
+          <button class="btn primary" id="flip" type="button">Flip</button>
+          <button class="btn" id="next" type="button" aria-label="Next card">→</button>
+        </div>
+
+        <div class="secondary">
+          <button class="btn ghost" id="shuffle" type="button" aria-pressed="false">Shuffle</button>
+        </div>
+
+        <p class="keys">← → to navigate · Space to flip</p>
+      </section>
+
+      <!-- 30-day study plan -->
+      <section class="view view-doc" id="view-plan" data-view="plan" aria-label="Study plan" hidden></section>
+
+      <!-- Study companion -->
+      <section class="view view-doc" id="view-companion" data-view="companion" aria-label="Study companion" hidden></section>
+
+      <!-- Course slides, by exam domain, with transcribed text -->
+      <section class="view view-doc" id="view-lessons" data-view="lessons" aria-label="Lessons" hidden></section>
+
+      <!-- Key terms glossary -->
+      <section class="view view-doc" id="view-glossary" data-view="glossary" aria-label="Glossary" hidden></section>
+
+      <!-- Practice exams (official + verified sources) -->
+      <section class="view view-doc" id="view-exams" data-view="exams" aria-label="Practice exams" hidden></section>
+
+      <!-- Course assessments (starter, midpoint, final) -->
+      <section class="view view-doc" id="view-assessments" data-view="assessments" aria-label="Assessments" hidden></section>
+    </main>
+
+    <footer class="source">Content from the certmasterclass.com CCA-F study pack.</footer>
+  </div>
+
+  <!-- Content is encrypted in vault/; gate.js loads the app scripts after the access code unlocks it. -->
+  <script src="js/gate.js"></script>
+</body>
+</html>
