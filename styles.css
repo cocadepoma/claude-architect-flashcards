@@ -1210,6 +1210,8 @@ h1 {
   align-items: center;
   gap: 10px;
 }
+.review-remove { margin-left: auto; }
+#view-mistakes .review-head { flex-wrap: wrap; }
 
 .review-num { font-weight: 800; }
 

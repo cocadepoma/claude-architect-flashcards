@@ -33,10 +33,99 @@ window.ExamEngine = (() => {
 
   const scenarioLabel = (s) => s.label || `Scenario ${s.id}`;
 
+  // ---------- Mistakes (shared by every mounted bank) ----------
+  // { items: { "<bank>:<questionId>": { bank, id, examId, chosen, count, lastAt } }, attempts: ["<bank>:<examId>:<startedAt>"] }
+  const MISTAKES_KEY = 'cca-f:mistakes';
+  const MISTAKES_EVENT = 'cca-f:mistakes-changed';
+  const MAX_TRACKED_ATTEMPTS = 500;
+
+  function loadMistakes() {
+    const saved = storage.get(MISTAKES_KEY, null);
+    return {
+      items: saved && typeof saved.items === 'object' && saved.items ? saved.items : {},
+      attempts: saved && Array.isArray(saved.attempts) ? saved.attempts : [],
+    };
+  }
+
+  function saveMistakes(store) {
+    storage.set(MISTAKES_KEY, store);
+    window.dispatchEvent(new CustomEvent(MISTAKES_EVENT));
+  }
+
+  // Adds the incorrectly answered questions of a finished attempt. Each attempt is recorded once,
+  // so calling it again for the same attempt (e.g. on every page load) changes nothing.
+  function recordMistakes(bankKey, questionById, att) {
+    if (!bankKey || !att || !att.finishedAt) return;
+    const store = loadMistakes();
+    const attemptKey = `${bankKey}:${att.examId}:${att.startedAt}`;
+    if (store.attempts.includes(attemptKey)) return;
+    for (const id of att.questionIds) {
+      const q = questionById.get(id);
+      const chosen = att.answers[id] || [];
+      if (!q || !chosen.length || isCorrect(q, chosen)) continue;
+      const key = `${bankKey}:${id}`;
+      const prev = store.items[key];
+      store.items[key] = { bank: bankKey, id, examId: att.examId, chosen, count: (prev ? prev.count : 0) + 1, lastAt: att.finishedAt };
+    }
+    store.attempts = [...store.attempts, attemptKey].slice(-MAX_TRACKED_ATTEMPTS);
+    saveMistakes(store);
+  }
+
+  function removeMistake(key) {
+    const store = loadMistakes();
+    if (!store.items[key]) return;
+    delete store.items[key];
+    saveMistakes(store);
+  }
+
+  // Review card for one answered question: options marked correct / your answer, explanation and source.
+  function renderReview(q, chosen, { num, scenario, task, meta, actions } = {}) {
+    const ok = isCorrect(q, chosen);
+    const status = !chosen.length ? 'Unanswered' : ok ? 'Correct' : 'Incorrect';
+    return h('article', { class: `review-item ${ok ? 'is-ok' : 'is-bad'}` },
+      h('header', { class: 'review-item-head' },
+        num ? h('span', { class: 'review-num', text: num }) : null,
+        h('span', { class: `status ${ok ? 'status-ok' : 'status-bad'}`, text: `${ok ? '✓' : '✗'} ${status}` }),
+        domainChip(q.domain, false),
+        actions || null),
+      meta ? h('p', { class: 'review-meta', text: meta }) : null,
+      scenario ? h('p', { class: 'review-meta', text: `${scenarioLabel(scenario)}: ${scenario.title}` }) : null,
+      h('p', { class: 'q-prompt' }, richText(q.prompt)),
+      h('ul', { class: 'review-options' }, q.options.map((o) => {
+        const isAnswer = q.answer.includes(o.key);
+        const picked = chosen.includes(o.key);
+        const cls = ['review-option'];
+        if (isAnswer) cls.push('is-answer');
+        if (picked && !isAnswer) cls.push('is-wrong');
+        return h('li', { class: cls.join(' ') },
+          h('span', { class: 'option-key', text: o.key }),
+          h('span', { class: 'option-text' }, richText(o.text)),
+          isAnswer ? h('span', { class: 'tag tag-ok', text: 'Correct answer' }) : null,
+          picked ? h('span', { class: isAnswer ? 'tag tag-ok' : 'tag tag-bad', text: 'Your answer' }) : null);
+      })),
+      q.explanation
+        ? h('div', { class: 'explanation' },
+          h('p', { class: 'eyebrow', text: 'Explanation (from the source)' }),
+          h('p', { class: 'explanation-text' }, richText(q.explanation)))
+        : null,
+      q.verification
+        ? h('div', { class: 'verification' },
+          h('p', { class: 'eyebrow', text: 'Answer checked against' }),
+          h('p', {}, q.verification.url
+            ? h('a', { href: q.verification.url, target: '_blank', rel: 'noopener', text: q.verification.label })
+            : q.verification.label),
+          h('blockquote', { text: q.verification.quote }))
+        : null,
+      h('p', { class: 'fine' },
+        task ? `Task statement ${q.taskStatement}: ${task}. ` : '',
+        'Source: ', sourceLink(q.source), '.'));
+  }
+
   /**
    * @param {HTMLElement} root   section element to render into
    * @param {object} bank        { questions, exams, scenarios?, taskStatements? }
-   * @param {object} config      { storagePrefix, title, lead, stats?, formatSource?, passNote }
+   * @param {object} config      { storagePrefix, title, lead, stats?, formatSource?, passNote, mistakeBank? }
+   *                             mistakeBank: key under which this bank's wrong answers are kept in Mistakes.
    */
   function mount(root, bank, config) {
     if (!root || !bank) return;
@@ -96,6 +185,8 @@ window.ExamEngine = (() => {
     }
 
     let attempt = loadAttempt();
+    // Imports a finished attempt saved before mistakes were tracked (a no-op once recorded).
+    recordMistakes(config.mistakeBank, questionById, attempt);
     let reviewFilter = 'all';
     let timerId = null;
 
@@ -152,6 +243,7 @@ window.ExamEngine = (() => {
       attempt.finishedAt = Math.min(Date.now(), attempt.deadline);
       saveAttempt();
       recordHistory(exam, score(attempt));
+      recordMistakes(config.mistakeBank, questionById, attempt);
       render({ scrollTop: true });
     }
 
@@ -403,45 +495,11 @@ window.ExamEngine = (() => {
     }
 
     function renderReviewItem({ q, i, chosen }) {
-      const ok = isCorrect(q, chosen);
-      const status = !chosen.length ? 'Unanswered' : ok ? 'Correct' : 'Incorrect';
-      const scenario = scenarioById.get(q.scenario);
-      const task = taskStatements[q.taskStatement];
-      return h('article', { class: `review-item ${ok ? 'is-ok' : 'is-bad'}` },
-        h('header', { class: 'review-item-head' },
-          h('span', { class: 'review-num', text: `Q${i + 1}` }),
-          h('span', { class: `status ${ok ? 'status-ok' : 'status-bad'}`, text: `${ok ? '✓' : '✗'} ${status}` }),
-          domainChip(q.domain, false)),
-        scenario ? h('p', { class: 'review-meta', text: `${scenarioLabel(scenario)}: ${scenario.title}` }) : null,
-        h('p', { class: 'q-prompt' }, richText(q.prompt)),
-        h('ul', { class: 'review-options' }, q.options.map((o) => {
-          const isAnswer = q.answer.includes(o.key);
-          const picked = chosen.includes(o.key);
-          const cls = ['review-option'];
-          if (isAnswer) cls.push('is-answer');
-          if (picked && !isAnswer) cls.push('is-wrong');
-          return h('li', { class: cls.join(' ') },
-            h('span', { class: 'option-key', text: o.key }),
-            h('span', { class: 'option-text' }, richText(o.text)),
-            isAnswer ? h('span', { class: 'tag tag-ok', text: 'Correct answer' }) : null,
-            picked ? h('span', { class: isAnswer ? 'tag tag-ok' : 'tag tag-bad', text: 'Your answer' }) : null);
-        })),
-        q.explanation
-          ? h('div', { class: 'explanation' },
-            h('p', { class: 'eyebrow', text: 'Explanation (from the source)' }),
-            h('p', { class: 'explanation-text' }, richText(q.explanation)))
-          : null,
-        q.verification
-          ? h('div', { class: 'verification' },
-            h('p', { class: 'eyebrow', text: 'Answer checked against' }),
-            h('p', {}, q.verification.url
-              ? h('a', { href: q.verification.url, target: '_blank', rel: 'noopener', text: q.verification.label })
-              : q.verification.label),
-            h('blockquote', { text: q.verification.quote }))
-          : null,
-        h('p', { class: 'fine' },
-          task ? `Task statement ${q.taskStatement}: ${task}. ` : '',
-          'Source: ', sourceLink(q.source), '.'));
+      return renderReview(q, chosen, {
+        num: `Q${i + 1}`,
+        scenario: scenarioById.get(q.scenario),
+        task: taskStatements[q.taskStatement],
+      });
     }
 
     // ---------- Render ----------
@@ -463,5 +521,5 @@ window.ExamEngine = (() => {
     render();
   }
 
-  return { mount, isCorrect };
+  return { mount, isCorrect, renderReview, loadMistakes, removeMistake, MISTAKES_EVENT };
 })();

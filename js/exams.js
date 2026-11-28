@@ -9,6 +9,7 @@
     const format = EXAM_BANK.examFormat;
     ExamEngine.mount(document.getElementById('view-exams'), EXAM_BANK, {
       storagePrefix: 'cca-f:exams',
+      mistakeBank: 'exams',
       title: 'Practice Exams',
       lead: 'Timed exams in the official format. No question is invented: each one is copied word for word from the source linked under it.',
       stats: [
@@ -25,6 +26,7 @@
   if (ASSESSMENT_BANK) {
     ExamEngine.mount(document.getElementById('view-assessments'), ASSESSMENT_BANK, {
       storagePrefix: 'cca-f:assessments',
+      mistakeBank: 'assessments',
       title: 'Assessments',
       lead: 'Three 30-question checkpoints from the course: before you start, halfway through the lectures, and before the practice exams. Questions, answers and explanations are copied from the course PDFs.',
       stats: ['30 questions each', '60 minutes', 'Starter · Midpoint · Final'],
