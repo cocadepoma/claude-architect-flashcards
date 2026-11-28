@@ -34,7 +34,9 @@ window.ExamEngine = (() => {
   const scenarioLabel = (s) => s.label || `Scenario ${s.id}`;
 
   // ---------- Mistakes (shared by every mounted bank) ----------
-  // { items: { "<bank>:<questionId>": { bank, id, examId, chosen, count, lastAt } }, attempts: ["<bank>:<examId>:<startedAt>"] }
+  // { items: { "<bank>:<questionId>": { bank, id, examId, chosen, count, lastAt } }, attempts: ["<bank>:<examId>:<startedAt>"],
+  //   removed: { "<bank>:<questionId>": <removedAt> } }
+  // `removed` remembers when a question was removed so a sync from another device does not bring it back.
   const MISTAKES_KEY = 'cca-f:mistakes';
   const MISTAKES_EVENT = 'cca-f:mistakes-changed';
   const MAX_TRACKED_ATTEMPTS = 500;
@@ -44,6 +46,7 @@ window.ExamEngine = (() => {
     return {
       items: saved && typeof saved.items === 'object' && saved.items ? saved.items : {},
       attempts: saved && Array.isArray(saved.attempts) ? saved.attempts : [],
+      removed: saved && typeof saved.removed === 'object' && saved.removed ? saved.removed : {},
     };
   }
 
@@ -75,6 +78,7 @@ window.ExamEngine = (() => {
     const store = loadMistakes();
     if (!store.items[key]) return;
     delete store.items[key];
+    store.removed[key] = Date.now();
     saveMistakes(store);
   }
 

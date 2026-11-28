@@ -1223,6 +1223,32 @@ h1 {
 .status-ok { color: var(--ok); }
 .status-bad { color: var(--bad); }
 
+/* ---------- Sync ---------- */
+.sync-block {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.sync-block h3 { margin: 0; font-size: 17px; }
+
+.sync-code {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--btn-bg);
+  color: var(--text);
+  font: 16px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; /* 16px keeps iOS from zooming in */
+  word-break: break-all;
+  resize: vertical;
+}
+
+.sync-code:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.sync-status { min-height: 1.4em; margin: 0; color: var(--muted); font-size: 15px; }
+.sync-status.is-error { color: var(--bad); }
+
 .review-meta {
   margin: 0;
   font-size: 13px;
