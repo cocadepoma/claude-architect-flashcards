@@ -33,6 +33,12 @@ window.ExamEngine = (() => {
 
   const scenarioLabel = (s) => s.label || `Scenario ${s.id}`;
 
+  // Questions whose answer could not be confirmed against official material, or whose origin is unclear,
+  // carry `doubtful` (the reason) and show this badge wherever they appear.
+  const doubtfulBadge = (q) => (q.doubtful
+    ? h('span', { class: 'badge badge-doubtful', title: q.doubtful, text: 'Not verified' })
+    : null);
+
   // ---------- Mistakes (shared by every mounted bank) ----------
   // { items: { "<bank>:<questionId>": { bank, id, examId, chosen, count, lastAt } }, attempts: ["<bank>:<examId>:<startedAt>"],
   //   removed: { "<bank>:<questionId>": <removedAt> } }
@@ -93,8 +99,10 @@ window.ExamEngine = (() => {
         num ? h('span', { class: 'review-num', text: num }) : null,
         h('span', { class: `status ${ok ? 'status-ok' : 'status-bad'}`, text: `${ok ? '✓' : '✗'} ${status}` }),
         domainChip(q.domain, false),
+        doubtfulBadge(q),
         actions || null),
       meta ? h('p', { class: 'review-meta', text: meta }) : null,
+      q.doubtful ? h('p', { class: 'review-meta review-doubtful', text: `Not verified: ${q.doubtful}` }) : null,
       scenario ? h('p', { class: 'review-meta', text: `${scenarioLabel(scenario)}: ${scenario.title}` }) : null,
       h('p', { class: 'q-prompt' }, richText(q.prompt)),
       h('ul', { class: 'review-options' }, q.options.map((o) => {
@@ -389,6 +397,7 @@ window.ExamEngine = (() => {
             h('p', {}, richText(scenario.description)))
           : null,
 
+        q.doubtful ? h('p', { class: 'q-flags' }, doubtfulBadge(q)) : null,
         h('p', { class: 'q-prompt' }, richText(q.prompt)),
 
         h('fieldset', { class: 'options' },
