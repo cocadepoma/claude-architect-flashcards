@@ -75,6 +75,7 @@
         h('p', { class: 'lead', text: 'Every question you answered incorrectly in Exams and Assessments, most recent first, with your last answer, the correct one and the explanation. Remove a question once you have it.' })),
       all.length
         ? h('section', { class: 'review' },
+          h('a', { class: 'btn primary retry-link', href: '#retry', text: 'Retry them as an exam' }),
           h('div', { class: 'review-head' },
             h('div', { class: 'review-filters' },
               filterButton('all', 'All', all.length),

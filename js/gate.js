@@ -7,7 +7,7 @@
   const REMEMBER_KEY = 'cca-f:access';
   const APP_SCRIPTS = [
     'js/dom.js', 'js/cards.js', 'js/plan.js', 'js/companion.js', 'js/lessons.js',
-    'js/glossary.js', 'js/exam-engine.js', 'js/exams.js', 'js/mistakes.js', 'js/sync.js', 'js/app.js',
+    'js/glossary.js', 'js/exam-engine.js', 'js/exams.js', 'js/mistakes.js', 'js/retry.js', 'js/sync.js', 'js/app.js',
   ];
   const IMAGE_CACHE_LIMIT = 24;
 

@@ -57,6 +57,7 @@ window.ExamEngine = (() => {
 
   // Adds the incorrectly answered questions of a finished attempt. Each attempt is recorded once,
   // so calling it again for the same attempt (e.g. on every page load) changes nothing.
+  // A question with `mistakeRef` ({ bank, id, examId }) is a copy (as in Retry) and counts against its original.
   function recordMistakes(bankKey, questionById, att) {
     if (!bankKey || !att || !att.finishedAt) return;
     const store = loadMistakes();
@@ -66,9 +67,10 @@ window.ExamEngine = (() => {
       const q = questionById.get(id);
       const chosen = att.answers[id] || [];
       if (!q || !chosen.length || isCorrect(q, chosen)) continue;
-      const key = `${bankKey}:${id}`;
+      const ref = q.mistakeRef || { bank: bankKey, id, examId: att.examId };
+      const key = `${ref.bank}:${ref.id}`;
       const prev = store.items[key];
-      store.items[key] = { bank: bankKey, id, examId: att.examId, chosen, count: (prev ? prev.count : 0) + 1, lastAt: att.finishedAt };
+      store.items[key] = { bank: ref.bank, id: ref.id, examId: ref.examId, chosen, count: (prev ? prev.count : 0) + 1, lastAt: att.finishedAt };
     }
     store.attempts = [...store.attempts, attemptKey].slice(-MAX_TRACKED_ATTEMPTS);
     saveMistakes(store);
@@ -336,9 +338,9 @@ window.ExamEngine = (() => {
       const qs = questionsOf(exam);
       const scenarios = new Set(qs.map((q) => q.scenario).filter(Boolean)).size;
       const inProgress = attempt && !attempt.finishedAt && attempt.examId === exam.id;
-      const meta = exam.draw
-        ? [`${exam.draw} questions`, `${exam.minutes} minutes`, `random from ${qs.length}`]
-        : [`${qs.length} questions`, `${exam.minutes} minutes`];
+      const count = exam.draw || qs.length;
+      const meta = [`${count} question${count === 1 ? '' : 's'}`, `${exam.minutes} minutes`];
+      if (exam.draw && exam.draw < qs.length) meta.push(`random from ${qs.length}`);
       if (scenarios && !exam.draw) meta.push(`${scenarios} scenarios`);
       return h('article', { class: 'exam-card' },
         h('div', { class: 'exam-card-head' },

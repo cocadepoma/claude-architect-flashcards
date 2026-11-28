@@ -2,7 +2,7 @@
 (() => {
   'use strict';
 
-  const VIEWS = ['cards', 'glossary', 'plan', 'companion', 'lessons', 'exams', 'assessments', 'mistakes', 'sync'];
+  const VIEWS = ['cards', 'glossary', 'plan', 'companion', 'lessons', 'exams', 'assessments', 'mistakes', 'retry', 'sync'];
   const STORAGE_KEY = 'cca-f:view';
   const { storage } = window.DOM;
 
